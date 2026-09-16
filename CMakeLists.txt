@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.20)
 project(AMDCloneOverlayProbe LANGUAGES CXX)
 
-add_executable(AMDCloneOverlayProbe WIN32 src/main.cpp)
+# V3 is intentionally a console probe so the user can see the KMT/MPO
+# diagnostics and explicitly choose whether to attempt direct MPO present.
+add_executable(AMDCloneOverlayProbe src/v3.cpp)
 target_compile_features(AMDCloneOverlayProbe PRIVATE cxx_std_17)
 target_compile_definitions(AMDCloneOverlayProbe PRIVATE UNICODE _UNICODE WIN32_LEAN_AND_MEAN)
-target_link_libraries(AMDCloneOverlayProbe PRIVATE d3d11 dxgi dcomp user32 gdi32 ole32)
+target_link_libraries(AMDCloneOverlayProbe PRIVATE d3d11 dxgi user32 gdi32)
 
 if(MSVC)
   # d3dkmthk.h is a WDK-facing header. Force the desktop Win32/NT type
