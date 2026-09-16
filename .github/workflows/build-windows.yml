@@ -1,0 +1,71 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - "src/**"
+      - "CMakeLists.txt"
+      - ".github/workflows/build-windows.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build x64 Release
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Show tool versions
+        shell: pwsh
+        run: |
+          cmake --version
+          Write-Host "Runner: $env:RUNNER_OS / $env:PROCESSOR_ARCHITECTURE"
+
+      - name: Configure with Visual Studio 2022
+        shell: pwsh
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build Release
+        shell: pwsh
+        run: cmake --build build --config Release --parallel
+
+      - name: Verify EXE exists
+        shell: pwsh
+        run: |
+          $exe = "build/Release/AMDCloneOverlayProbe.exe"
+          if (-not (Test-Path $exe)) {
+            throw "Build completed but EXE was not found at $exe"
+          }
+          Get-Item $exe | Format-List Name,Length,LastWriteTime
+
+      - name: Prepare download package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item "build/Release/AMDCloneOverlayProbe.exe" "dist/AMDCloneOverlayProbe.exe"
+          Copy-Item "README_CN.md" "dist/README_CN.md"
+          @"
+          AMD 680M Clone Overlay Probe
+
+          1. Win + P -> 复制
+          2. 运行 AMDCloneOverlayProbe.exe
+          3. 依次测试 1 / 2 / 3
+          4. 模式 3 下用 [ 和 ] 切换输出，R 切换限制标志
+          5. 把 clone_overlay_test.log 和两块屏幕的照片发回来
+          "@ | Set-Content -Encoding UTF8 "dist/QUICK_TEST.txt"
+
+      - name: Upload Windows EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: AMDCloneOverlayProbe-Windows-x64
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
