@@ -7,5 +7,7 @@ target_compile_definitions(AMDCloneOverlayProbe PRIVATE UNICODE _UNICODE WIN32_L
 target_link_libraries(AMDCloneOverlayProbe PRIVATE d3d11 dxgi dcomp user32 gdi32 ole32)
 
 if(MSVC)
-  target_compile_options(AMDCloneOverlayProbe PRIVATE /W4 /permissive- /EHsc)
+  # d3dkmthk.h uses NTSTATUS but the desktop SDK include path does not always
+  # make winternl.h visible first. Force it in before the translation unit.
+  target_compile_options(AMDCloneOverlayProbe PRIVATE /W4 /permissive- /EHsc /FIwinternl.h)
 endif()
